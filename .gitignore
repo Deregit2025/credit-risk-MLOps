@@ -1,0 +1,66 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# -------------------------
+# Data
+# -------------------------
+# All raw and processed data should never go to GitHub
+data/raw/
+data/processed/
+data/*.csv
+*.csv
+
+# -------------------------
+# ML, MLOps & Model Tracking
+# -------------------------
+mlruns/
+models/
+*.pkl
+*.joblib
+
+# Logs
+logs/
+*.log
+
+# -------------------------
+# Environment & Config
+# -------------------------
+.env
+*.env
+.env.*
+
+# -------------------------
+# Bytecode / Build
+# -------------------------
+dist/
+build/
+*.egg-info/
+
+# -------------------------
+# OS / Misc
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Docker
+# -------------------------
+*.tar
