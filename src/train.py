@@ -12,6 +12,7 @@ import mlflow
 import mlflow.sklearn
 import warnings
 warnings.filterwarnings("ignore")
+from mlflow.tracking import MlflowClient
 
 # ------------------------------
 # Load data
@@ -83,13 +84,15 @@ param_distributions = {
 # MLflow experiment
 # ------------------------------
 mlflow.set_experiment("bnpl_risk_modeling")
+client = MlflowClient()
 
 best_model = None
 best_score = 0
+best_run_id = None  # <-- capture the run ID of the best model
 
 for name, model in models.items():
     print(f"\nTraining model: {name}")
-    with mlflow.start_run(run_name=name):
+    with mlflow.start_run(run_name=name) as run:
         search = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_distributions[name],
@@ -125,5 +128,27 @@ for name, model in models.items():
         if metrics["roc_auc"] > best_score:
             best_model = best_est
             best_score = metrics["roc_auc"]
+            best_run_id = run.info.run_id  # capture the run ID
 
-print(f"\nBest model: {best_model.__class__.__name__} with ROC-AUC: {best_score:.4f}")
+# ------------------------------
+# Register best model in MLflow Model Registry
+# ------------------------------
+# ------------------------------
+# Register best model in MLflow Model Registry
+# ------------------------------
+if best_model is not None:
+    model_name = "bnpl_risk_best_model"
+    print(f"\nRegistering best model '{best_model.__class__.__name__}' in MLflow Model Registry...")
+
+    # Try to create registered model (ignore if it already exists)
+    try:
+        client.create_registered_model(model_name)
+        print(f"Registered new model '{model_name}'")
+    except mlflow.exceptions.MlflowException:
+        print(f"Model '{model_name}' already exists, using existing model")
+
+    # Register the current run's model version
+    model_uri = f"runs:/{best_run_id}/model"
+    client.create_model_version(name=model_name, source=model_uri, run_id=best_run_id)
+    print(f"Best model registered as '{model_name}' with version in MLflow.")
+
