@@ -1,7 +1,9 @@
 # src/api/main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 import mlflow.sklearn
 import pandas as pd
+from pydantic import ValidationError
 from src.api.pydantic_models import CustomerData, PredictionResponse
 
 # Initialize FastAPI app
@@ -13,12 +15,20 @@ app = FastAPI(
 
 # Load best model from MLflow
 MODEL_NAME = "bnpl_risk_best_model"
-MODEL_VERSION = 1  # Use latest version if needed
+MODEL_VERSION = 3  # change to your registered model version
 
 try:
     model = mlflow.sklearn.load_model(f"models:/{MODEL_NAME}/{MODEL_VERSION}")
 except Exception as e:
     raise RuntimeError(f"Failed to load model: {e}")
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    # Catch Pydantic validation errors and return clean JSON response
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()}
+    )
 
 @app.get("/")
 def root():
@@ -27,8 +37,8 @@ def root():
 @app.post("/predict", response_model=PredictionResponse)
 def predict(customer: CustomerData):
     try:
-        # Convert request to DataFrame
-        data = pd.DataFrame([customer.dict()])
+        # Convert validated request to DataFrame
+        data = pd.DataFrame([customer.model_dump()])  # Pydantic v2 uses model_dump()
 
         # If any preprocessing is required, apply it here
         # Example: encoding categorical features, scaling numeric ones
@@ -42,5 +52,7 @@ def predict(customer: CustomerData):
             risk_label=risk_label,
             risk_probability=risk_prob
         )
+
     except Exception as e:
+        # Return 500 error if something goes wrong in prediction
         raise HTTPException(status_code=500, detail=str(e))
