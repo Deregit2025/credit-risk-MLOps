@@ -37,7 +37,7 @@ jobs:
           pytest --maxfail=1 --disable-warnings -q --html=report.html
 
       - name: Upload test report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pytest-report
           path: report.html
