@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # match Docker/requirements compatibility
+          python-version: '3.11.14' # match Docker/requirements compatibility
 
       - name: Upgrade pip, setuptools, wheel
         run: |
