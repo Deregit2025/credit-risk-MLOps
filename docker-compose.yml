@@ -1,10 +1,10 @@
 services:
-  bnpl-api:
+  api:
     build: .
-    container_name: bnpl-risk-api
+    container_name: bnpl_risk-api
     ports:
       - "8000:8000"
     volumes:
-      - ./mlruns:/app/mlruns
+      - .:/app
     environment:
-      - MLFLOW_TRACKING_URI=file:/app/mlruns
+      - MODEL_PATH=/app/mlruns/1/models/m-cacd6654018946898329870611bbc8e7/artifacts
