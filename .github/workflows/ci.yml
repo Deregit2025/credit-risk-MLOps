@@ -1,34 +1,43 @@
-name: CI/CD - BNPL Risk Prediction API
+# .github/workflows/ci.yml
+
+name: BNPL Risk API CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - task-1
+      - task-2
+      - task-3
+      - task-4
+      - task-5
+      - task-6
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.12]
 
     steps:
-    # 1. Checkout the repo
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    # 2. Set up Python
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.12
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    # 3. Install dependencies
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install pytest
 
-    # 4. Run tests (replace with your actual test command)
-    - name: Run tests
-      run: |
-        # Example: pytest for API or unit tests
-        pytest --maxfail=1 --disable-warnings -q
+      - name: Run tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
