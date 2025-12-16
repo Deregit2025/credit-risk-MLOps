@@ -5,6 +5,7 @@ import mlflow.sklearn
 import pandas as pd
 from pydantic import ValidationError
 from src.api.pydantic_models import CustomerData, PredictionResponse
+import os
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -13,18 +14,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Load best model from MLflow
-MODEL_NAME = "bnpl_risk_best_model"
-MODEL_VERSION = 3  # change to your registered model version
+# Path to the local MLflow model artifacts
+MODEL_PATH = os.path.join(
+    "mlruns", "1", "models", "m-cacd6654018946898329870611bbc8e7", "artifacts"
+)
 
+# Load the model
 try:
-    model = mlflow.sklearn.load_model(f"models:/{MODEL_NAME}/{MODEL_VERSION}")
+    model = mlflow.sklearn.load_model(MODEL_PATH)
+    print(f"Model loaded successfully from {MODEL_PATH}")
 except Exception as e:
-    raise RuntimeError(f"Failed to load model: {e}")
+    raise RuntimeError(f"Failed to load model from local folder: {e}")
 
+# Exception handler for Pydantic validation errors
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
-    # Catch Pydantic validation errors and return clean JSON response
     return JSONResponse(
         status_code=422,
         content={"detail": exc.errors()}
@@ -40,9 +44,7 @@ def predict(customer: CustomerData):
         # Convert validated request to DataFrame
         data = pd.DataFrame([customer.model_dump()])  # Pydantic v2 uses model_dump()
 
-        # If any preprocessing is required, apply it here
-        # Example: encoding categorical features, scaling numeric ones
-        # TODO: Apply the same preprocessing used during training
+        # TODO: Apply same preprocessing as during training if needed
 
         # Generate prediction
         risk_prob = model.predict_proba(data)[:, 1][0]
@@ -54,5 +56,4 @@ def predict(customer: CustomerData):
         )
 
     except Exception as e:
-        # Return 500 error if something goes wrong in prediction
         raise HTTPException(status_code=500, detail=str(e))
